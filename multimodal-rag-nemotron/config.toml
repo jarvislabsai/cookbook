@@ -6,7 +6,7 @@ table_name = "chunks"
 
 # Retrieval
 # Options: "vector_text", "vector_image_text"
-vector_column = "vector_text"
+vector_column = "vector_image_text"
 # Options: "vector", "hybrid"
 search_mode = "hybrid"
 top_k = 16
@@ -14,7 +14,7 @@ rerank_top_n = 16
 gen_top_n = 5
 
 # LLM endpoint (OpenAI-compatible)
-llm_endpoint = "http://127.0.0.1:8000/v1"
+llm_endpoint = "http://0.0.0.0:8000/v1"
 llm_model = "model"
 max_tokens = 4096
 temperature = 0.2
@@ -25,7 +25,7 @@ enable_thinking = false
 embed_model = "nvidia/llama-nemotron-embed-vl-1b-v2"
 rerank_model = "nvidia/llama-nemotron-rerank-vl-1b-v2"
 # Options: "text", "image", "image_text"
-rerank_modality = "text"
+rerank_modality = "image_text"
 rerank_batch_size = 16
 # Options: "flash_attention_2", "eager", "kernels-community/flash-attn2"
 attn_implementation = "flash_attention_2"
@@ -37,5 +37,5 @@ condense_temperature = 0.6
 condense_top_p = 0.95
 
 # Source visualization
-show_bbox = true
+show_bbox = false
 show_labels = true

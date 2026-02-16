@@ -24,6 +24,7 @@ data/
 # IDE / editor
 .vscode/
 .idea/
+.chainlit/
 
 # OS
 .DS_Store

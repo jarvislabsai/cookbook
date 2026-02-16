@@ -457,8 +457,27 @@ class RAGPipeline:
                     continue
 
                 reasoning = delta.get("reasoning") or delta.get("reasoning_content")
-                content = delta.get("content")
-                if reasoning:
-                    yield {"reasoning": reasoning}
+                content = ""
+                raw_content = delta.get("content")
+                if isinstance(raw_content, str):
+                    content = raw_content
+                elif isinstance(raw_content, dict):
+                    text = raw_content.get("text") or raw_content.get("content")
+                    if isinstance(text, str):
+                        content = text
+                elif isinstance(raw_content, list):
+                    parts = []
+                    for part in raw_content:
+                        if isinstance(part, str):
+                            parts.append(part)
+                        elif isinstance(part, dict):
+                            text = part.get("text") or part.get("content")
+                            if isinstance(text, str):
+                                parts.append(text)
+                    content = "".join(parts)
                 if content:
                     yield {"content": content}
+                elif reasoning:
+                    # Some vLLM/model combos emit answer text in `reasoning` with empty `content`.
+                    # Treat it as stream content so UI token streaming still works.
+                    yield {"content": reasoning}

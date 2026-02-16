@@ -342,7 +342,7 @@ This repo reads runtime settings from `config.toml` (no environment variable ove
 |---|---|---|
 | `db_dir` | `data/lancedb` | Path to the LanceDB database folder. Must match the `--db-dir` you used during indexing. |
 | `table_name` | `chunks` | Name of the LanceDB table. Must match `--table` from indexing. |
-| `vector_column` | `vector_text` | Which vector to search: `vector_text` (text only) or `vector_image_text` (image+text). Use `vector_image_text` for image-heavy PDFs. |
+| `vector_column` | `vector_image_text` | Which vector to search: `vector_text` (text only) or `vector_image_text` (image+text). |
 | `search_mode` | `hybrid` | Retrieval strategy: `hybrid` (vector + full-text search) or `vector` (vector only). |
 | `top_k` | `16` | How many candidates to fetch from the database before reranking. |
 | `rerank_top_n` | `16` | How many candidates to keep after reranking. If higher than retrieved candidates, the effective value is clamped automatically. |
@@ -365,7 +365,7 @@ This repo reads runtime settings from `config.toml` (no environment variable ove
 |---|---|---|
 | `embed_model` | `nvidia/llama-nemotron-embed-vl-1b-v2` | Model used to create vector embeddings for queries and documents. |
 | `rerank_model` | `nvidia/llama-nemotron-rerank-vl-1b-v2` | Cross-encoder model used to re-score retrieved candidates. |
-| `rerank_modality` | `text` | What the reranker looks at: `text`, `image`, or `image_text`. Use `image_text` for image-heavy documents. |
+| `rerank_modality` | `image_text` | What the reranker looks at: `text`, `image`, or `image_text`. |
 | `rerank_batch_size` | `16` | How many candidates to rerank in one batch. Lower this if you're running low on GPU memory. |
 | `attn_implementation` | `flash_attention_2` | Attention backend for model loading. Supported: `flash_attention_2`, `eager`, `kernels-community/flash-attn2`. |
 
@@ -402,11 +402,10 @@ This repo reads runtime settings from `config.toml` (no environment variable ove
 
 **Working with image-heavy PDFs (charts, tables, diagrams)?**
 - Use the parse-then-index workflow (Step 3 → Step 4 Option A)
-- Set `vector_column = "vector_image_text"` to use image-aware embeddings
-- Set `rerank_modality = "image_text"` to let the reranker use visual signals
+- Keep defaults: `vector_column = "vector_image_text"` and `rerank_modality = "image_text"`
 
 **Working with plain text or Markdown?**
-- Keep `vector_column = "vector_text"` and `rerank_modality = "text"`
+- Switch to `vector_column = "vector_text"` and `rerank_modality = "text"`
 - Direct indexing (Step 4 Option B) is fine — no need for the parser
 
 ---

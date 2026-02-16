@@ -162,6 +162,7 @@ async def stream_answer_tokens(answer_msg, messages, turn_prefix):
     threading.Thread(target=worker, daemon=True).start()
 
     answer_text = ""
+    reasoning_fallback_text = ""
     usage = None
     while True:
         item = await queue.get()
@@ -173,10 +174,16 @@ async def stream_answer_tokens(answer_msg, messages, turn_prefix):
         if "usage" in token:
             usage = token["usage"]
             continue
+        reasoning = token.get("reasoning")
+        if reasoning:
+            reasoning_fallback_text += reasoning
         content = token.get("content")
         if content:
             answer_text += content
             await answer_msg.stream_token(content)
+    if not answer_text and reasoning_fallback_text:
+        answer_text = reasoning_fallback_text
+        await answer_msg.stream_token(reasoning_fallback_text)
     await answer_msg.update()
     if usage:
         prompt_tokens = usage.get("prompt_tokens", 0)
@@ -194,7 +201,8 @@ async def stream_answer_tokens(answer_msg, messages, turn_prefix):
 async def run_generation(answer_msg, messages, turn_prefix):
     try:
         return await stream_answer_tokens(answer_msg, messages, turn_prefix)
-    except Exception:
+    except Exception as exc:
+        print(f"{turn_prefix}[generation_error] {type(exc).__name__}: {exc}")
         answer_msg.content = GENERIC_ERROR_MSG
         await answer_msg.update()
         return answer_msg.content
