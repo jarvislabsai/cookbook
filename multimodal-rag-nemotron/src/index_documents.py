@@ -7,6 +7,7 @@ from pathlib import Path
 import lancedb
 import numpy as np
 import pyarrow as pa
+import pypdfium2 as pdfium
 import torch
 from PIL import Image
 from tqdm import tqdm
@@ -17,10 +18,20 @@ EMBED_DIM = 2048
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Index parsed documents and markdown files into LanceDB.")
+    parser = argparse.ArgumentParser(
+        description="Index parsed JSONL records or files from a directory into LanceDB."
+    )
     parser.add_argument("--jsonl", default=None, help="Path to parsed JSONL records.")
-    parser.add_argument("--markdown-dir", default=None, help="Directory containing markdown files.")
-    parser.add_argument("--markdown-glob", default="*.md", help="Glob for markdown files inside --markdown-dir.")
+    parser.add_argument(
+        "--data-dir",
+        default=None,
+        help="Directory containing files to index directly (.md, .txt, .pdf).",
+    )
+    parser.add_argument(
+        "--glob",
+        default="*.md",
+        help="Glob pattern for files inside --data-dir (examples: '*.md', '*.txt', '*.pdf').",
+    )
     parser.add_argument("--db-dir", default="data/lancedb")
     parser.add_argument("--table", default="chunks")
     parser.add_argument("--embed-model", default=DEFAULT_EMBED_MODEL)
@@ -45,6 +56,14 @@ def sha256_text(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def sha256_file(path):
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def iter_jsonl(path):
     with Path(path).open("r", encoding="utf-8") as handle:
         for line in handle:
@@ -54,31 +73,73 @@ def iter_jsonl(path):
             yield json.loads(line)
 
 
-def iter_markdown_records(markdown_dir, markdown_glob):
-    base = Path(markdown_dir)
-    if not base.exists():
-        raise FileNotFoundError(f"Markdown directory not found: {base}")
+def iter_pdf_records(path):
+    source_id = sha256_file(path)
+    doc = pdfium.PdfDocument(str(path))
+    chunk_count = len(doc)
+    try:
+        for page_idx in range(chunk_count):
+            page = doc.get_page(page_idx)
+            textpage = None
+            try:
+                textpage = page.get_textpage()
+                text = textpage.get_text_bounded() or ""
+            finally:
+                if textpage is not None:
+                    textpage.close()
+                page.close()
 
-    paths = sorted(base.glob(markdown_glob))
+            yield {
+                "source_id": source_id,
+                "source_name": path.name,
+                "chunk_index": page_idx,
+                "chunk_count": chunk_count,
+                "image_path": "",
+                "parser_output": "",
+                "content_markdown": text,
+                "raw_text": text,
+                "layout_classes": [],
+                "layout_bboxes_abs": [],
+                "layout_texts": [],
+            }
+    finally:
+        doc.close()
+
+
+def iter_data_records(data_dir, glob_pattern):
+    base = Path(data_dir)
+    if not base.exists():
+        raise FileNotFoundError(f"Data directory not found: {base}")
+
+    paths = sorted(path for path in base.glob(glob_pattern) if path.is_file())
     if not paths:
-        raise FileNotFoundError(f"No markdown files found in {base} with glob {markdown_glob}")
+        raise FileNotFoundError(f"No files found in {base} with glob {glob_pattern}")
 
     for path in paths:
-        text = path.read_text(encoding="utf-8")
-        source_id = sha256_text(text)
-        yield {
-            "source_id": source_id,
-            "source_name": path.name,
-            "chunk_index": 0,
-            "chunk_count": 1,
-            "image_path": "",
-            "parser_output": "",
-            "content_markdown": text,
-            "raw_text": text,
-            "layout_classes": [],
-            "layout_bboxes_abs": [],
-            "layout_texts": [],
-        }
+        suffix = path.suffix.lower()
+        if suffix in {".md", ".txt"}:
+            text = path.read_text(encoding="utf-8")
+            source_id = sha256_text(str(path.resolve()))
+            yield {
+                "source_id": source_id,
+                "source_name": path.name,
+                "chunk_index": 0,
+                "chunk_count": 1,
+                "image_path": "",
+                "parser_output": "",
+                "content_markdown": text,
+                "raw_text": text,
+                "layout_classes": [],
+                "layout_bboxes_abs": [],
+                "layout_texts": [],
+            }
+            continue
+
+        if suffix == ".pdf":
+            yield from iter_pdf_records(path)
+            continue
+
+        print(f"Skipping unsupported file type: {path}")
 
 
 def normalize_layout_elements(record):
@@ -203,8 +264,8 @@ def embed_image_text(model, images, texts):
 
 
 def iter_input_records(args):
-    if not args.jsonl and not args.markdown_dir:
-        raise SystemExit("Provide at least one input source: --jsonl and/or --markdown-dir")
+    if not args.jsonl and not args.data_dir:
+        raise SystemExit("Provide at least one input source: --jsonl and/or --data-dir")
 
     if args.jsonl:
         jsonl_path = Path(args.jsonl)
@@ -213,8 +274,8 @@ def iter_input_records(args):
         for record in iter_jsonl(jsonl_path):
             yield record
 
-    if args.markdown_dir:
-        for record in iter_markdown_records(args.markdown_dir, args.markdown_glob):
+    if args.data_dir:
+        for record in iter_data_records(args.data_dir, args.glob):
             yield record
 
 
