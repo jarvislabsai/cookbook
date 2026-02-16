@@ -1,0 +1,47 @@
+[project]
+name = "multimodal-rag-nemotron"
+version = "0.1.0"
+description = "Generic multimodal RAG pipeline for PDF and Markdown documents on local GPU servers."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "accelerate>=1.12.0",
+    "beautifulsoup4>=4.14.3",
+    "chainlit>=2.9.6",
+    "flash-attn==2.8.3",
+    "lancedb>=0.27.1",
+    "numpy>=2.2.0",
+    "pandas>=2.3.3",
+    "pillow>=11.0.0",
+    "pyarrow>=23.0.0",
+    "pypdfium2>=5.3.0",
+    "requests>=2.32.0",
+    "tomli",
+    "torch>=2.9.1",
+    "tqdm>=4.67.2",
+    "transformers>=4.47.1,<5.0.0",
+    "vllm>=0.15.0",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+py-modules = ["pipeline", "index_documents", "parse_pdfs_with_vllm"]
+packages = ["nemotron_parse_utils"]
+
+[tool.setuptools.package-data]
+nemotron_parse_utils = ["chat_template.jinja"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.0",
+]
