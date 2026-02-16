@@ -382,7 +382,7 @@ This repo reads runtime settings from `config.toml` (no environment variable ove
 
 | Setting | Default | Description |
 |---|---|---|
-| `show_bbox` | `true` | Draw bounding boxes on source images to highlight layout elements. |
+| `show_bbox` | `false` | Draw bounding boxes on source images to highlight layout elements. |
 | `show_labels` | `true` | Show class labels (Table, Figure, Text, etc.) on bounding boxes. |
 
 ---

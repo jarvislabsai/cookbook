@@ -14,7 +14,7 @@ rerank_top_n = 16
 gen_top_n = 5
 
 # LLM endpoint (OpenAI-compatible)
-llm_endpoint = "http://0.0.0.0:8000/v1"
+llm_endpoint = "http://127.0.0.1:8000/v1"
 llm_model = "model"
 max_tokens = 4096
 temperature = 0.2
