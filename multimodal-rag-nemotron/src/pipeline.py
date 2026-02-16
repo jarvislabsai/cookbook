@@ -2,7 +2,6 @@
 
 import io
 import json
-import os
 import time
 from pathlib import Path
 from types import SimpleNamespace
@@ -44,63 +43,12 @@ CONDENSE_PROMPT = (
     "5) The query must end with a question mark."
 )
 
-ENV_OVERRIDES = {
-    "db_dir": ("RAG_DB_DIR", str),
-    "table_name": ("RAG_TABLE_NAME", str),
-    "vector_column": ("RAG_VECTOR_COLUMN", str),
-    "search_mode": ("RAG_SEARCH_MODE", str),
-    "top_k": ("RAG_TOP_K", int),
-    "rerank_top_n": ("RAG_RERANK_TOP_N", int),
-    "gen_top_n": ("RAG_GEN_TOP_N", int),
-    "llm_endpoint": ("RAG_LLM_ENDPOINT", str),
-    "llm_model": ("RAG_LLM_MODEL", str),
-    "max_tokens": ("RAG_MAX_TOKENS", int),
-    "temperature": ("RAG_TEMPERATURE", float),
-    "top_p": ("RAG_TOP_P", float),
-    "rerank_batch_size": ("RAG_RERANK_BATCH_SIZE", int),
-    "rerank_modality": ("RAG_RERANK_MODALITY", str),
-    "enable_thinking": ("RAG_ENABLE_THINKING", bool),
-    "attn_implementation": ("RAG_ATTN_IMPLEMENTATION", str),
-    "embed_model": ("RAG_EMBED_MODEL", str),
-    "rerank_model": ("RAG_RERANK_MODEL", str),
-    "history_max_turns": ("RAG_HISTORY_MAX_TURNS", int),
-    "condense_max_tokens": ("RAG_CONDENSE_MAX_TOKENS", int),
-    "condense_temperature": ("RAG_CONDENSE_TEMPERATURE", float),
-    "condense_top_p": ("RAG_CONDENSE_TOP_P", float),
-    "show_bbox": ("RAG_SHOW_BBOX", bool),
-    "show_labels": ("RAG_SHOW_LABELS", bool),
-}
-
-
-def _parse_bool(raw_value):
-    value = raw_value.strip().lower()
-    if value in {"1", "true", "yes", "on"}:
-        return True
-    if value in {"0", "false", "no", "off"}:
-        return False
-    raise ValueError(f"expected boolean value, got {raw_value!r}")
-
-
-def _coerce_env(raw_value, caster):
-    if caster is bool:
-        return _parse_bool(raw_value)
-    return caster(raw_value)
-
-
 def load_config(path):
     config_path = Path(path)
     if not config_path.exists():
         raise FileNotFoundError(f"Config not found: {config_path}")
     with config_path.open("rb") as handle:
         data = tomli.load(handle)
-    for key, (env_name, caster) in ENV_OVERRIDES.items():
-        raw_value = os.getenv(env_name)
-        if raw_value is None or raw_value == "":
-            continue
-        try:
-            data[key] = _coerce_env(raw_value, caster)
-        except ValueError as exc:
-            raise ValueError(f"Invalid value for {env_name}: {raw_value!r}") from exc
     return SimpleNamespace(**data)
 
 
