@@ -4,6 +4,16 @@ Self-hosted multimodal RAG pipeline that indexes your PDFs, Markdown, and text f
 
 **Stack:** [Nemotron Parse](https://huggingface.co/nvidia/NVIDIA-Nemotron-Parse-v1.1) (PDF parsing) + [Nemotron Embed VL](https://huggingface.co/nvidia/llama-nemotron-embed-vl-1b-v2) (embedding) + [Nemotron Rerank VL](https://huggingface.co/nvidia/llama-nemotron-rerank-vl-1b-v2) (reranking) + a local LLM server exposing `v1/chat/completions` with streaming support (generation) + [LanceDB](https://lancedb.github.io/lancedb/) (vector store) + [Chainlit](https://docs.chainlit.io/) (chat UI).
 
+
+---
+
+## Demo Video
+
+https://github.com/user-attachments/assets/f216d27f-aa86-4c28-b7a0-bd1a78e9b977
+
+
+---
+
 ### Get Started Quickly
 
 Spin up a GPU instance (e.g. on [Jarvislabs.ai](https://jarvislabs.ai/)), then:
