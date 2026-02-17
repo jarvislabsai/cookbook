@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.pyo
+*.so
+*.egg-info/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+
+# Env files
+.env
+.env.*
+
+# Data / outputs
+outputs/
+logs/
+data/
+*.zip
+
+# IDE / editor
+.vscode/
+.idea/
+.chainlit/
+
+# OS
+.DS_Store
