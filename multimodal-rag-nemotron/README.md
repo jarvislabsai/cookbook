@@ -276,8 +276,8 @@ vllm serve nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16 \
 ```
 
 Model sizing note:
-- The 30B BF16 example above is generally not a single A100 40 GB target.
-- If you are on A100 40 GB, pick a smaller chat model.
+- The 30B BF16 model generally needs H100-class hardware or a multi-GPU setup.
+- On a single A100 40 GB, use a smaller chat model.
 
 This starts a server at `http://localhost:8000/v1` that the app will call for answer generation.
 Set `llm_endpoint` to an address reachable from where `app.py` runs (for same-VM setup, `http://127.0.0.1:8000/v1` is correct).
