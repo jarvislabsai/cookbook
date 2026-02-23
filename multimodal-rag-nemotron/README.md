@@ -35,8 +35,20 @@ uv run python src/index_documents.py \
   --db-dir data/lancedb --table chunks --overwrite
 
 # 3. Start your LLM and launch the chat app
+wget https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16/resolve/main/nano_v3_reasoning_parser.py
+
 vllm serve nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16 \
-  --served-model-name model --host 0.0.0.0 --port 8000 --trust-remote-code
+  --served-model-name model \
+  --max-num-seqs 8 \
+  --tensor-parallel-size 1 \
+  --max-model-len 262144 \
+  --port 8000 \
+  --host 0.0.0.0 \
+  --trust-remote-code \
+  --enable-auto-tool-choice \
+  --tool-call-parser qwen3_coder \
+  --reasoning-parser-plugin nano_v3_reasoning_parser.py \
+  --reasoning-parser nano_v3
 
 # (in another terminal)
 uv run chainlit run app.py --host 0.0.0.0 --port 6006 -w -h
@@ -268,11 +280,20 @@ uv run python src/index_documents.py \
 The chat app sends questions to a local `v1/chat/completions` endpoint. The simplest setup is serving a model with vLLM:
 
 ```bash
+wget https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16/resolve/main/nano_v3_reasoning_parser.py
+
 vllm serve nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16 \
   --served-model-name model \
-  --host 0.0.0.0 \
+  --max-num-seqs 8 \
+  --tensor-parallel-size 1 \
+  --max-model-len 262144 \
   --port 8000 \
-  --trust-remote-code
+  --host 0.0.0.0 \
+  --trust-remote-code \
+  --enable-auto-tool-choice \
+  --tool-call-parser qwen3_coder \
+  --reasoning-parser-plugin nano_v3_reasoning_parser.py \
+  --reasoning-parser nano_v3
 ```
 
 Model sizing note:
